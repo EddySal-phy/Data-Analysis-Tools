@@ -9,7 +9,7 @@
 #include <regex>
 #include <unordered_map>
 #include <sstream>
-
+#include <algorithm>
 
 
 namespace fs = std::filesystem;
@@ -31,7 +31,8 @@ struct MatchData {
  *
  * @return A vector of MatchData structs, each containing the filename and the extracted values for the corresponding file.
  */
-std::vector<MatchData> extract_pattern_values_from_file(const std::string& directoryPath, std::string& fileType, const std::vector<std::string>& patterns) {
+std::vector<MatchData> extract_pattern_values_from_file(const std::string& directoryPath, std::string& fileType, const std::vector<std::string>& patterns)
+{
     std::vector<MatchData> gpDataList;
 
     for (const auto& entry : fs::directory_iterator(directoryPath)) {
@@ -116,7 +117,8 @@ std::vector<MatchData> extract_pattern_values_from_file(const std::string& direc
  * rows with values extracted from each file. If any pattern values are missing 
  * for a particular file, "NaN" will be written as a placeholder.
  */
-void writeDataToFile(const std::vector<MatchData>& data, const std::string& outputFileName) {
+void write_match_data_to_file(const std::vector<MatchData>& data, const std::string& outputFileName)
+{
     std::ofstream outFile(outputFileName);
 
     if (!outFile.is_open()) {
@@ -169,7 +171,8 @@ void writeDataToFile(const std::vector<MatchData>& data, const std::string& outp
  * @param inputFileName The name of the input .dat file to be processed.
  * @param outputFileName The name of the output file where the processed data will be written.
  */
-void processDatFile(const std::string& inputFileName, const std::string& outputFileName) {
+void extract_config_of_file(const std::string& inputFileName, const std::string& outputFileName)
+{
     std::ifstream inputFile(inputFileName);
     std::ofstream outputFile(outputFileName);
     
@@ -203,6 +206,70 @@ void processDatFile(const std::string& inputFileName, const std::string& outputF
     inputFile.close();
     outputFile.close();
 }
+
+struct Row {
+    std::vector<double> data;
+};
+
+// Comparator to sort based on a specific column
+inline bool
+compareRows(const Row& a, const Row& b, int col) {
+    return a.data[col] < b.data[col];
+}
+
+bool sort_column_in_file(const std::string& inputFile, const std::string& outputFile, int columnIndex)
+{
+    std::ifstream inFile(inputFile);
+    if (!inFile) {
+        std::cerr << "Error: Cannot open input file.\n";
+        return false;
+    }
+
+    std::vector<Row> rows;
+    std::string line;
+    while (std::getline(inFile, line)) {
+        std::istringstream ss(line);
+        Row row;
+        double value;
+        while (ss >> value) {
+            row.data.push_back(value);
+        }
+        rows.push_back(row);
+    }
+    inFile.close();
+
+    // Check if the specified column index is valid
+    if (rows.empty() || columnIndex < 0 || columnIndex >= rows[0].data.size()) {
+        std::cerr << "Error: Invalid column index.\n";
+        return false;
+    }
+
+    // Sort rows by the specified column
+    std::sort(rows.begin(), rows.end(), [columnIndex](const Row& a, const Row& b) {
+        return a.data[columnIndex] < b.data[columnIndex];
+    });
+
+    // Write sorted data to the output file
+    std::ofstream outFile(outputFile);
+    if (!outFile) {
+        std::cerr << "Error: Cannot open output file.\n";
+        return false;
+    }
+
+    for (const auto& row : rows) {
+        for (size_t i = 0; i < row.data.size(); ++i) {
+            outFile << row.data[i];
+            if (i < row.data.size() - 1) {
+                outFile << " ";
+            }
+        }
+        outFile << "\n";
+    }
+    outFile.close();
+
+    return true;
+}
+
 
 
 #endif //filehandler.hpp
