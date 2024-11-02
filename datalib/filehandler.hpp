@@ -14,12 +14,23 @@
 
 namespace fs = std::filesystem;
 
+// MatchData struct to store data extracted from each file
 struct MatchData {
     std::string fileName;
     int finalNumber; // New field to store the final number extracted from the filename
     std::unordered_map<std::string, std::vector<double>> values; // Maps patterns to their corresponding values
 };
 
+
+/**
+ * @brief Extracts values from a set of files in a given directory based on a set of patterns.
+ *
+ * @param directoryPath The path to the directory containing the files to be processed.
+ * @param fileType The extension of the files to be processed.
+ * @param patterns The set of patterns to search for in the files. The values will be extracted from the files and stored in the MatchData struct.
+ *
+ * @return A vector of MatchData structs, each containing the filename and the extracted values for the corresponding file.
+ */
 std::vector<MatchData> extract_pattern_values_from_file(const std::string& directoryPath, std::string& fileType, const std::vector<std::string>& patterns) {
     std::vector<MatchData> gpDataList;
 
@@ -89,6 +100,22 @@ std::vector<MatchData> extract_pattern_values_from_file(const std::string& direc
     return gpDataList;
 }
 
+/**
+ * @brief Writes extracted data to an output file in a tabular format.
+ * 
+ * This function writes the extracted data stored in a vector of MatchData 
+ * to a specified output file. Each row in the output file corresponds to 
+ * a file's data, with columns representing different patterns and their 
+ * corresponding values.
+ * 
+ * @param data A vector of MatchData structs containing the extracted data 
+ *        from files, including filenames and pattern values.
+ * @param outputFileName The name of the output file where the data will be written.
+ * 
+ * The output file will have a header row with pattern names and subsequent 
+ * rows with values extracted from each file. If any pattern values are missing 
+ * for a particular file, "NaN" will be written as a placeholder.
+ */
 void writeDataToFile(const std::vector<MatchData>& data, const std::string& outputFileName) {
     std::ofstream outFile(outputFileName);
 
@@ -131,6 +158,17 @@ void writeDataToFile(const std::vector<MatchData>& data, const std::string& outp
 }
 
 
+/**
+ * @brief Processes a .dat file by extracting specific numbers from filenames and writing them to an output file.
+ *
+ * This function reads each line from the specified input .dat file, extracts a numerical identifier
+ * from filenames matching the pattern "landau-(\\d+)\\.out", and writes the extracted number along
+ * with the rest of the line to the specified output file. If the pattern is not found in a line,
+ * an error message is printed to the standard error.
+ *
+ * @param inputFileName The name of the input .dat file to be processed.
+ * @param outputFileName The name of the output file where the processed data will be written.
+ */
 void processDatFile(const std::string& inputFileName, const std::string& outputFileName) {
     std::ifstream inputFile(inputFileName);
     std::ofstream outputFile(outputFileName);
