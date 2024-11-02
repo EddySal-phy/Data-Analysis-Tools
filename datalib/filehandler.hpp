@@ -270,6 +270,33 @@ bool sort_column_in_file(const std::string& inputFile, const std::string& output
     return true;
 }
 
+// Stores a column from a file into a vector
+std::vector<double> readColumn(const std::string& filename, int columnIndex) {
+    std::vector<double> columnData;
+    std::ifstream file(filename);
 
+    if (!file) {
+        std::cerr << "Error: Cannot open file " << filename << "\n";
+        return columnData;
+    }
 
+    std::string line;
+    while (std::getline(file, line)) {
+        std::istringstream ss(line);
+        double value;
+        int currentColumn = 0;
+
+        // Read up to the desired column
+        while (ss >> value) {
+            if (currentColumn == columnIndex) {
+                columnData.push_back(value);
+                break;
+            }
+            currentColumn++;
+        }
+    }
+
+    file.close();
+    return columnData;
+}
 #endif //filehandler.hpp
