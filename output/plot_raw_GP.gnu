@@ -1,4 +1,3 @@
-# Gnuplot script to plot mass vs temperature
 
 # Set the data file name
 datafile = "sorted_raw_GP0000.dat"
@@ -17,7 +16,8 @@ set grid
 
 # Plot command
 plot datafile using 1:2 with linespoints linestyle 1 title 'GP_L',\
-     datafile using 1:3 with linespoints linestyle 2 title 'GP_T'
+     datafile using 1:3 with linespoints linestyle 2 title 'GP_T',
+
 
 # Pause and wait for the user to close the window
 pause -1 "Press Enter to close the plot..."
