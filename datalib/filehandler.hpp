@@ -30,7 +30,7 @@ struct MatchData
  *
  * @return A vector of MatchData structs, each containing the filename and the extracted values for the corresponding file.
  */
-std::vector<MatchData> extract_pattern_values_from_file(const std::string &directoryPath, std::string &fileType, const std::vector<std::string> &patterns)
+std::vector<MatchData> extract_pattern_values_from_file(const std::string &directoryPath, const std::string &fileType, const std::vector<std::string> &patterns)
 {
 	std::vector<MatchData> gpDataList;
 
@@ -187,21 +187,23 @@ void write_match_data_to_file(const std::vector<MatchData> &data,
 	}
 }
 
-
-
 /**
- * @brief Function to write data with optional headers to a file.
+ * @brief Writes a vector of integer-double pairs to a file with optional headers and extra information.
  *
- * @param[in] data --- Vector of pairs containing the data to be written (int, double).
- * @param[in] filename --- Path to the output file where data will be written.
- * @param[in] headers --- Optional vector of headers to write as the first line in the file.
+ * This function writes the provided data to a file specified by the filename.
+ * Optionally, custom headers can be added as well as extra information to be
+ * written at the beginning of the file. Each pair of integers and doubles are
+ * written in separate lines with tab separation.
  *
- * @details If headers are provided, they are written to the first line of the file,
- * separated by a space. Each subsequent line contains a pair of data values.
+ * @param[in] data Vector of pairs of integers and doubles to be written to the file.
+ * @param[in] filename Name of the file to write the data to.
+ * @param[in] headers Optional vector of strings representing headers to be written at the top of the file.
+ * @param[in] extraInfo Optional vector of strings representing extra information to be written before headers.
  */
 void write_pair_data_to_file(const std::vector<std::pair<int, double>> &data,
 														 const std::string &filename,
-														 const std::vector<std::string> &headers = {})
+														 const std::vector<std::string> &headers = {},
+														 const std::vector<std::string> &extraInfo = {})
 {
 	std::ofstream outfile(filename); // Open the file for writing
 
@@ -210,6 +212,16 @@ void write_pair_data_to_file(const std::vector<std::pair<int, double>> &data,
 	{
 		std::cerr << "Error opening file for writing: " << filename << std::endl;
 		return;
+	}
+
+	// Write extra information
+	if (!extraInfo.empty())
+	{
+		for (size_t i = 0; i < extraInfo.size(); ++i)
+		{
+			outfile << extraInfo[i] << "\n";
+		}
+		outfile << std::endl;
 	}
 
 	// Write headers if provided
@@ -366,7 +378,7 @@ bool sort_column_in_file(const std::string &inputFile, const std::string &output
 			outFile << row.data[i];
 			if (i < row.data.size() - 1)
 			{
-				outFile << " ";
+				outFile << "\t\t\t ";
 			}
 		}
 		outFile << "\n";
@@ -458,6 +470,61 @@ void remove_file(const std::string &filename)
 	{
 		std::cerr << "Filesystem error: " << e.what() << std::endl;
 	}
+}
+
+
+// Filters a file with lines mathcing given pattern -- c++ version of grep in bash
+void grep_to_file(const std::string &inputFile, const std::string &outputFile, const std::string &pattern)
+{
+	std::ifstream inFile(inputFile);
+	std::ofstream outFile(outputFile, std::ios::app); // Open in append mode
+	if (!inFile)
+	{
+		std::cerr << "Error: Unable to open input file: " << inputFile << std::endl;
+		return;
+	}
+	if (!outFile)
+	{
+		std::cerr << "Error: Unable to open output file: " << outputFile << std::endl;
+		return;
+	}
+
+	std::string line;
+	std::regex regexPattern(pattern);
+
+	while (std::getline(inFile, line))
+	{
+		if (std::regex_search(line, regexPattern))
+		{
+			outFile << line << '\n';
+		}
+	}
+
+	inFile.close();
+	outFile.close();
+}
+
+void grep_directory(const std::string &directory,
+										const std::string &outputFile,
+										const std::string &pattern,
+										const std::string &fileType)
+{
+	// Clear the output file initially
+	std::ofstream clearFile(outputFile);
+	clearFile.close();
+
+	std::cout << "Grep files from directory: " << directory;
+	for (const auto &entry : fs::directory_iterator(directory))
+	{
+		if (entry.is_regular_file() && entry.path().extension() == fileType)
+		{
+			bool  printProcess = false;
+			if (printProcess) std::cout << "Processing file: " << entry.path().string() << std::endl;
+			grep_to_file(entry.path().string(), outputFile, pattern);
+		}
+	}
+
+	std::cout << "All matching lines have been written to " << outputFile << std::endl;
 }
 
 #endif // filehandler.hpp

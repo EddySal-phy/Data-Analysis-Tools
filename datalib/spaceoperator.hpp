@@ -2,7 +2,7 @@
 #define SPACEOPERATOR_HPP
 
 #include "filehandler.hpp"
-
+#include "stattools.hpp"
 
 /**
  * @brief Calculate autocorrelation for a given input vector up to a specified maximum tau (time displacement).
@@ -35,5 +35,53 @@ void autoCorrel_sample_operator(const std::vector<double> &dataToCreateCorrSampl
     vectorToStoreCorrCoefPair.push_back(std::make_pair(tau, corr_coef));
   }
 }
+
+
+void specialGen_sort_trunc_file_operator(const std::vector<std::string>& patterns,
+                                    const std::string &outputFilename,
+                                    const std::string &dataPath,
+                                    const std::string &fileExtension,
+                                    const std::string &outputDirectory)
+{
+  // Collect and store data from files
+  std::vector<MatchData> dataExtracted = extract_pattern_values_from_file(dataPath, fileExtension, patterns);
+
+  // Write data that mathches patterns into file
+  write_match_data_to_file(dataExtracted, outputDirectory + "tempFile1.dat", {"#file_name", "values extracted"});
+
+  // Print Output results -- for debug purposes
+  if (false)
+  {
+    for (const auto &gpData : dataExtracted)
+    {
+      std::cout << "File: " << gpData.fileName << std::endl;
+      for (const auto &[pattern, values] : gpData.values)
+      {
+        std::cout << pattern << " Values: ";
+        for (const auto &value : values)
+        {
+          std::cout << value << " ";
+        }
+        std::cout << std::endl;
+      }
+    }
+  }
+
+  // Post-Process function to get configuration from data-file name
+  extract_config_of_file(outputDirectory + "tempFile1.dat", outputDirectory + "tempFile2.dat");
+
+  // Remove the preocessed (previous) file
+  //remove_file(outputDirectory + "tempFile1.dat");
+  
+  // Sort the column colSort of a file
+  const int colToSort = 0;
+  sort_column_in_file(outputDirectory + "tempFile2.dat", outputDirectory + outputFilename, colToSort);
+  
+  // Remove the preocessed (previous) file
+  //remove_file(outputDirectory + "tempFile2.dat");
+}
+
+
+
 
 #endif // SPACEOPERATOR_HPP
