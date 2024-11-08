@@ -81,6 +81,19 @@ void specialGen_sort_trunc_file_operator(const std::vector<std::string>& pattern
   //remove_file(outputDirectory + "tempFile2.dat");
 }
 
+// Function to generate N bootstrap averages and store in averages (vector)
+void gen_bootstrap_averages(const std::vector<double>& data, int N, std::vector<double>& averages) 
+{
+  averages.clear();  // Clear any existing contents in the averages vector
+  averages.reserve(N);
+
+  for (int i = 0; i < N; ++i) 
+  {
+    std::vector<double> bootstrapSample = bootstrap_generate_sample(data);
+    double average = mean(bootstrapSample);
+    averages.push_back(average);
+  }
+}
 
 
 
