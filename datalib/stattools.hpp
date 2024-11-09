@@ -173,25 +173,25 @@ inline std::vector<double> bootstrap_generate_sample(const std::vector<double>& 
 
 
 // Bootstrap estimate of Standard Error
-inline double bootstrap_stdError(const std::vector<double> bootReplicParam)
+inline double bootstrap_stdError(const std::vector<double>& bootstrapEstimates)
 {
   /* Bootstrap estimate of standard error base on 
    * Efron, B., & Tibshirani, R.J. (1994). An Introduction to the Bootstrap (1st ed.). Chapman and Hall/CRC (p.48)
-   *
+   * 
+   * Useful links: https://yuleii.github.io/2021/01/22/bootstrap.html
    */
   
-  double B = bootReplicParam.size(); // Number of replication of the estimator param.
-  double replicMean = mean(bootReplicParam); // Mean of the bootstrap replications
-  double stdErr = 0; // standard error 
+  double meanEstimate = mean(bootstrapEstimates);
 
-  for (int i=0;  i < B; i++ )
-  {
-    stdErr += (bootReplicParam[i] - replicMean)*(bootReplicParam[i] - replicMean); 
-  }
- 
-  stdErr = std::sqrt(stdErr / (B-1));
-  
-  return stdErr
+  double sumSquaredDifferences = 0.0;
+  for (double estimate : bootstrapEstimates) {
+        sumSquaredDifferences += (estimate - meanEstimate) * (estimate - meanEstimate);
+    }
+
+    // Standard error calculation based on the formula in the image
+    double variance = sumSquaredDifferences / (bootstrapEstimates.size() - 1);
+    return std::sqrt(variance);
 }
+
 
 #endif //stattools.hpp
